@@ -12,7 +12,7 @@ import torch.nn.functional as F
 import torchsparse.nn as spnn
 from torchsparse import PointTensor
 
-
+# 融合
 class GFM(nn.Module):
     def __init__(self,in_features):
         super(GFM, self).__init__()
@@ -32,7 +32,7 @@ class GFM(nn.Module):
 
 
         v2p = voxel_to_point(v, p)
-        r2p = range_to_point(r, px, py)
+        r2p = range_to_point(r, px, py) # 只有range_to_point是需要query？？？
 
         r_weight = self.range_branch(r2p)
         p_weight = self.point_branch(p.F)
@@ -52,7 +52,8 @@ class GFM(nn.Module):
 
         p.F = fuse
         v = point_to_voxel(v,p)
-        r = point_to_range(r.shape[-2:],p.F,px,py)
+        r = point_to_range(r.shape[-2:],p.F,px,py) # 只有point_to_range是需要query？？？
+
 
         return r,p,v
 
@@ -62,10 +63,10 @@ class RPVnet(nn.Module):
         super(RPVnet, self).__init__()
 
         self.vsize = vsize
-        self.cr = kwargs.get('cr')
-        self.cs = torch.Tensor(kwargs.get('cs'))
+        self.cr = kwargs.get('cr') # 1
+        self.cs = torch.Tensor(kwargs.get('cs')) #    - 32 # point mlp 1
         self.num_classes = kwargs.get('num_classes')
-        self.cs = (self.cs*self.cr).int()
+        self.cs = (self.cs*self.cr).int() 
 
 
         ''' voxel branch '''
@@ -166,10 +167,10 @@ class RPVnet(nn.Module):
 
         ])
 
-        self.gfm_stem = GFM(self.cs[0])
-        self.gfm_stage4 = GFM(self.cs[4])
-        self.gfm_stage6 = GFM(self.cs[6])
-        self.gfm_stage8 = GFM(self.cs[8])
+        self.gfm_stem = GFM(self.cs[0]) # 32第一次融合
+        self.gfm_stage4 = GFM(self.cs[4]) # 256
+        self.gfm_stage6 = GFM(self.cs[6]) # 128
+        self.gfm_stage8 = GFM(self.cs[8]) # 32
 
         self.final = nn.Linear(self.cs[8],self.num_classes)
 
@@ -192,7 +193,7 @@ class RPVnet(nn.Module):
         points.F = self.point_stem[0](points.F) # 32
         range0 = self.range_stem(image) # n,32,64,2048
 
-        range0,points,v0 = self.gfm_stem(range0,points,v0,px,py)
+        range0,points,v0 = self.gfm_stem(range0,points,v0,px,py) # 融合range&point&voxel
 
         # todo 这里要不要加上dropout?
         # v0.F = self.dropout(v0.F)

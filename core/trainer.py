@@ -13,7 +13,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader,BatchSampler
 
 from core.dataset.semantic_kitti import SemanticKITTIInternal
-from core.models.rpvnet import RPVnet
+from core.models.rpvnet import RPVnet # 模型
 from core.evaluator import MeanIoU
 
 # import os
@@ -46,8 +46,8 @@ class Trainer():
 
         self.model = RPVnet(
             vsize=model_cfg['voxel_size'],
-            cr=model_cfg['cr'],
-            cs=model_cfg['dimension_of_stages'],
+            cr=model_cfg['cr'], # cr参数 cr: 1
+            cs=model_cfg['dimension_of_stages'], # 
             num_classes = model_cfg['num_classes']
         )
 
